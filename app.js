@@ -13,29 +13,55 @@ let guessedLetters = [];
 // Set the initial score (lives)
 let score = 10;
 
-// Define the word to guess (converted to lowercase for case-insensitivity)
-let word = 'Kuressaare Ametikool'.toLowerCase();
+let word = ''; // The word to guess, initially empty
 let guessedWord = ''; // This will store the masked version of the word (underscores instead of letters)
 
+// Function to fetch words from a file (hangman.txt)
+async function fetchWords() {
+    try {
+        const response = await fetch('hangman.txt'); // Adjust the path if needed
+        if (!response.ok) {
+            throw new Error('Failed to fetch words');
+        }
+        const text = await response.text();
+        const words = text.split('\n').map(word => word.trim().toLowerCase()).filter(word => word.length > 0);
+        return words;
+    } catch (error) {
+        console.error('Error fetching words:', error);
+        alert('Error loading words from the file. Please try again later.');
+    }
+}
+
 // Initialize the game
-function initializeGame() {
-    guessedLetters = []; // Clear previously guessed letters
-    score = 10; // Reset score
-    word = 'Kuressaare Ametikool'.toLowerCase(); // Reset word
-    guessedWord = ''; // Reset guessedWord
+async function initializeGame() {
+    // Fetch words from the file
+    const words = await fetchWords();
+    if (!words || words.length === 0) {
+        alert('No words available for the game!');
+        return;
+    }
+
+    // Select a random word
+    word = words[Math.floor(Math.random() * words.length)];
+
+    // Reset the game state
+    guessedLetters = [];
+    score = 10;
+    guessedWord = '';
 
     // Replace letters with underscores, but keep spaces and special characters unchanged
     for (let char of word) {
-        if (char.match(/[a-zõäöüšž]/i)) { // If the character is a letter, replace it with "_"
+        if (char.match(/[a-zõäöüšž]/i)) {
             guessedWord += '_';
-        } else { // If it's a space or special character, keep it as is
+        } else {
             guessedWord += char;
         }
     }
 
-    scoreSpan.innerText = score; // Update the score display
-    guessedWordDiv.innerText = guessedWord; // Update the word display
-    updateGuessedWord(); // Update word display to show underscores initially
+    // Update the display
+    scoreSpan.innerText = score;
+    guessedWordDiv.innerText = guessedWord;
+    updateGuessedWord(); // Show underscores initially
 
     // Clear any previous buttons and create new ones
     alphabetDiv.innerHTML = '';
@@ -80,7 +106,7 @@ function updateGuessedWord() {
             displayWord += word[i];
         } else { // Otherwise, keep the underscore
             displayWord += guessedWord[i];
-            if (word[i].match(/[a-zõäöüšž]/i)) { 
+            if (word[i].match(/[a-zõäöüšž]/i)) {
                 isComplete = false; // If any letter is missing, set flag to false
             }
         }
